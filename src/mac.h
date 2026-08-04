@@ -10,7 +10,7 @@
 struct Mac final {
 	static constexpr int Size = 6;
 
-	// constructor
+    // constructor 4!!!!!
 	Mac() {}
 	Mac(const Mac& r) { memcpy(this->mac_, r.mac_, Size); }
 	Mac(const uint8_t* r) { memcpy(this->mac_, r, Size); }
@@ -21,7 +21,7 @@ struct Mac final {
 
 	// casting operator
 	explicit operator uint8_t*() const { return const_cast<uint8_t*>(mac_); }
-	explicit operator std::string() const;
+    explicit operator std::string() const; //this mac.. Using print_mac
 
 	// comparison operator
 	bool operator == (const Mac& r) const { return memcmp(mac_, r.mac_, Size) == 0; }
@@ -46,7 +46,7 @@ struct Mac final {
 
 	bool isMulticast() const { // 01:00:5E:0*
 		return mac_[0] == 0x01 && mac_[1] == 0x00 && mac_[2] == 0x5E && (mac_[3] & 0x80) == 0x00;
-	}
+    }
 
 	static Mac randomMac();
 	static Mac& nullMac();

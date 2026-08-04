@@ -6,7 +6,7 @@
 struct Ip final {
 	static const int Size = 4;
 
-	// constructor
+    // constructor !! -> 32 raw ip
 	Ip() {}
 	Ip(const uint32_t r) : ip_(r) {}
 	Ip(const std::string r);
@@ -33,5 +33,5 @@ struct Ip final {
 	}
 
 protected:
-	uint32_t ip_;
+    uint32_t ip_; //
 };

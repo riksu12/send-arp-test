@@ -15,4 +15,5 @@ HEADERS += \
 	arphdr.h \
 	ethhdr.h \
 	ip.h \
-	mac.h
+	mac.h \
+	osi_hdr.h

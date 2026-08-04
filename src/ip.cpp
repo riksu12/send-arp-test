@@ -11,7 +11,7 @@ Ip::Ip(const std::string r) {
 	ip_ = (a << 24) | (b << 16) | (c << 8) | d;
 }
 
-Ip::operator std::string() const {
+Ip::operator std::string() const { //no stay main ok?
 	char buf[32]; // enough size
 	sprintf(buf, "%u.%u.%u.%u",
 		(ip_ & 0xFF000000) >> 24,
