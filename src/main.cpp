@@ -100,10 +100,10 @@ Mac get_Vicmac(pcap_t* pcap, Mac my_mac, Ip myIP, Ip victimIP){
         if(ntohs(eth_hdr->type_) != EthHdr::Arp) continue;
 
         struct ArpHdr* arp_hdr = (struct ArpHdr*)(reply_packet + sizeof(struct EthHdr));
-        if(ntohs(arp_hdr->op()) == ArpHdr::Reply){
-            if(arp_hdr->sip() == victimIP) return arp_hdr->smac();
+        if(arp_hdr->op() == ArpHdr::Reply){
+            //if(ntohl(arp_hdr->sip()) == victimIP)
+            return arp_hdr->smac();
         }
-        return Mac::nullMac();
     }
     return Mac::nullMac();
 }
